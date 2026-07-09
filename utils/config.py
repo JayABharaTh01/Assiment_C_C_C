@@ -25,16 +25,16 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER")
 LLM_MODEL = os.getenv("LLM_MODEL")
 
 # API Keys
-HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Vector Databases
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-PINECONE_ENV = os.getenv("PINECONE_ENV")
-PINECONE_INDEX = os.getenv("PINECONE_INDEX")
+# Pinecone
 
-CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH")
-FAISS_INDEX_PATH = os.getenv("FAISS_INDEX_PATH")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_INDEX = os.getenv("PINECONE_INDEX")
+PINECONE_CLOUD = os.getenv("PINECONE_CLOUD")
+PINECONE_REGION = os.getenv("PINECONE_REGION")
+
 
 # Retrieval
 TOP_K = int(os.getenv("TOP_K"))
