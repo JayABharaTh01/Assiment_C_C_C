@@ -9,3 +9,7 @@ sentence-transformers
 torch
 python-dotenv
 pinecone
+transformers
+accelerate
+sentencepiece
+torch

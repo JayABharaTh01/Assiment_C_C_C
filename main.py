@@ -1,24 +1,75 @@
-from data_pipeline.data_read import DataReader
+from data_pipeline.pipeline import DataPipeline
+from embeddings.embedding_manager import EmbeddingManager
+from vector_store.vector_manager import VectorManager
+
+
+pipeline = DataPipeline()
+
+documents = pipeline.run()
+
+embedder = EmbeddingManager()
+
+manager = VectorManager()
+
+dimension = len(
+    embedder.embed_chunk("Hello")
+)
+
+manager.initialize(dimension)
+
+for doc_idx, doc in enumerate(documents):
+
+    embeddings = embedder.embed_chunks(
+        doc["chunks"]
+    )
+
+    # Create metadata for each chunk
+    metadata = [
+        {
+            "chunk_id": f"{doc['filename']}_chunk_{i}",
+            "filename": doc["filename"],
+            "filetype": doc["filetype"],
+            "chunk_index": i
+        }
+        for i in range(len(doc["chunks"]))
+    ]
+
+    manager.upload(
+        embeddings,
+        doc["chunks"],
+        metadata
+    )
+
+print("✓ All documents processed and uploaded to vector store!")
+
+print("Completed.")
+
+
+from rag.rag_pipeline import RAGPipeline
 
 
 def main():
 
-    reader = DataReader("data")
+    chatbot = RAGPipeline()
 
-    documents = reader.read_all_files()
+    while True:
 
-    for doc in documents:
+        question = input("\nAsk : ")
 
-        print("=" * 60)
+        if question.lower() == "exit":
+            break
 
-        print(f"File Name : {doc['filename']}")
-        print(f"File Type : {doc['filetype']}")
+        response = chatbot.ask(question)
 
-        print("-" * 60)
+        print("\nAnswer\n")
 
-        print(doc["content"][:500])
+        print(response["answer"])
 
-        print()
+        print("\nSources\n")
+
+        for source in response["sources"]:
+
+            print(source.metadata["filename"])
 
 
 if __name__ == "__main__":
