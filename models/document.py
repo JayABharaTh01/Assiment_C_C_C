@@ -1,7 +1,23 @@
 """
 document.py
 
-Data model representing a processed document throughout the RAG pipeline.
+Represents a processed document throughout the RAG pipeline.
+
+Pipeline:
+
+Read File
+    │
+    ▼
+Clean Text
+    │
+    ▼
+Chunk Text
+    │
+    ▼
+Metadata
+    │
+    ▼
+Embedding
 
 Author: Jaya Bharath
 """
@@ -13,14 +29,7 @@ from typing import List, Dict
 @dataclass
 class Document:
     """
-    Represents a single document after processing.
-
-    Attributes:
-        filename: Name of the file.
-        filetype: Extension of the file (.pdf, .csv, etc.).
-        content: Cleaned text extracted from the document.
-        chunks: List of text chunks.
-        metadata: Metadata associated with each chunk.
+    Represents a single processed document.
     """
 
     filename: str
@@ -31,40 +40,75 @@ class Document:
 
     metadata: List[Dict] = field(default_factory=list)
 
-    def number_of_chunks(self) -> int:
-        """
-        Returns the total number of chunks.
-        """
-        return len(self.chunks)
+    # ==========================================================
+    # Chunk Operations
+    # ==========================================================
 
-    def add_chunk(self, chunk: str):
+    def add_chunk(self, chunk: str) -> None:
         """
         Add a chunk.
         """
+
         self.chunks.append(chunk)
 
-    def add_metadata(self, meta: Dict):
+    def add_chunks(self, chunks: List[str]) -> None:
+        """
+        Add multiple chunks.
+        """
+
+        self.chunks.extend(chunks)
+
+    def number_of_chunks(self) -> int:
+        """
+        Return total number of chunks.
+        """
+
+        return len(self.chunks)
+
+    # ==========================================================
+    # Metadata Operations
+    # ==========================================================
+
+    def add_metadata(self, metadata: Dict) -> None:
         """
         Add metadata.
         """
-        self.metadata.append(meta)
 
-    def get_chunk(self, index: int):
-        """
-        Return a chunk.
-        """
-        return self.chunks[index]
+        self.metadata.append(metadata)
 
-    def get_metadata(self, index: int):
+    def add_all_metadata(
+        self,
+        metadata: List[Dict]
+    ) -> None:
         """
-        Return metadata of a chunk.
+        Add multiple metadata entries.
         """
-        return self.metadata[index]
 
-    def to_dict(self):
+        self.metadata.extend(metadata)
+
+    # ==========================================================
+    # Utility
+    # ==========================================================
+
+    def clear_chunks(self) -> None:
         """
-        Convert Document object into dictionary.
+        Remove all chunks.
         """
+
+        self.chunks.clear()
+
+    def clear_metadata(self) -> None:
+        """
+        Remove all metadata.
+        """
+
+        self.metadata.clear()
+
+    def to_dict(self) -> Dict:
+        """
+        Convert to dictionary.
+        """
+
         return {
             "filename": self.filename,
             "filetype": self.filetype,
@@ -73,10 +117,11 @@ class Document:
             "metadata": self.metadata,
         }
 
-    def __str__(self):
+    def __repr__(self) -> str:
+
         return (
             f"Document("
             f"filename='{self.filename}', "
-            f"type='{self.filetype}', "
-            f"chunks={len(self.chunks)})"
+            f"chunks={len(self.chunks)}, "
+            f"metadata={len(self.metadata)})"
         )

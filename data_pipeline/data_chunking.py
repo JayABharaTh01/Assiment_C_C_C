@@ -1,47 +1,127 @@
 """
 data_chunking.py
 
-Splits cleaned text into chunks.
+Splits cleaned document text into overlapping chunks.
+
+Pipeline:
+
+Cleaned Document
+        │
+        ▼
+Chunk Text
+        │
+        ▼
+Store Chunks in Document
+
+Author: Jaya Bharath
 """
 
-class DataChunker:
+from typing import List
 
-    def __init__(self,
-                 chunk_size=500,
-                 overlap=50):
+from models.document import Document
+
+
+class DataChunker:
+    """
+    Splits document text into overlapping chunks.
+    """
+
+    def __init__(
+        self,
+        chunk_size: int = 500,
+        overlap: int = 50
+    ):
+        """
+        Initialize the chunker.
+
+        Parameters
+        ----------
+        chunk_size : int
+            Maximum characters per chunk.
+
+        overlap : int
+            Number of overlapping characters.
+        """
 
         self.chunk_size = chunk_size
         self.overlap = overlap
 
-    def chunk_text(self, text):
+    # ==========================================================
+    # Chunk Single Text
+    # ==========================================================
+
+    def chunk_text(self, text: str) -> List[str]:
+        """
+        Split text into overlapping chunks.
+
+        Parameters
+        ----------
+        text : str
+
+        Returns
+        -------
+        List[str]
+        """
+
+        if not text.strip():
+            return []
 
         chunks = []
 
         start = 0
+        text_length = len(text)
 
-        while start < len(text):
+        while start < text_length:
 
-            end = start + self.chunk_size
+            end = min(
+                start + self.chunk_size,
+                text_length
+            )
 
-            chunks.append(text[start:end])
+            chunk = text[start:end].strip()
 
-            start += self.chunk_size - self.overlap
+            if chunk:
+                chunks.append(chunk)
+
+            if end >= text_length:
+                break
+
+            start = end - self.overlap
 
         return chunks
 
-    def chunk_documents(self, documents):
+    # ==========================================================
+    # Chunk Documents
+    # ==========================================================
 
-        chunked_docs = []
+    def chunk_documents(
+        self,
+        documents: List[Document]
+    ) -> List[Document]:
+        """
+        Chunk all documents.
 
-        for doc in documents:
+        Parameters
+        ----------
+        documents : List[Document]
 
-            chunks = self.chunk_text(doc["content"])
+        Returns
+        -------
+        List[Document]
+        """
 
-            chunked_docs.append(
-                {
-                    **doc,
-                    "chunks": chunks
-                }
+        processed_documents = []
+
+        for document in documents:
+
+            document.clear_chunks()
+
+            chunks = self.chunk_text(
+                document.content
             )
 
-        return chunked_docs
+            document.add_chunks(chunks)
+
+            processed_documents.append(document)
+
+        return processed_documents

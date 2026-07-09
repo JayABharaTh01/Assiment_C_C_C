@@ -1,3 +1,11 @@
+"""
+index_manager.py
+
+Handles Pinecone index creation and management.
+
+Author: Jaya Bharath
+"""
+
 from pinecone import Pinecone, ServerlessSpec
 
 from utils.config import (
@@ -9,37 +17,63 @@ from utils.config import (
 
 
 class IndexManager:
+    """
+    Manages the Pinecone index.
+    """
 
     def __init__(self):
 
         self.pc = Pinecone(api_key=PINECONE_API_KEY)
 
-    def create_index(self, dimension):
+    # ==========================================================
+    # Create Index
+    # ==========================================================
 
-        indexes = self.pc.list_indexes().names()
+    def create_index(self, dimension: int):
+        """
+        Create Pinecone index if it does not exist.
+        """
 
-        if PINECONE_INDEX not in indexes:
+        existing_indexes = self.pc.list_indexes().names()
 
-            self.pc.create_index(
-                name=PINECONE_INDEX,
-                dimension=dimension,
-                metric="cosine",
-                spec=ServerlessSpec(
-                    cloud=PINECONE_CLOUD,
-                    region=PINECONE_REGION
-                )
-            )
+        if PINECONE_INDEX in existing_indexes:
+            print(f"Index '{PINECONE_INDEX}' already exists.")
+            return
 
-            print(f"{PINECONE_INDEX} created.")
+        self.pc.create_index(
+            name=PINECONE_INDEX,
+            dimension=dimension,
+            metric="cosine",
+            spec=ServerlessSpec(
+                cloud=PINECONE_CLOUD,
+                region=PINECONE_REGION,
+            ),
+        )
 
-        else:
+        print(f"Index '{PINECONE_INDEX}' created successfully.")
 
-            print(f"{PINECONE_INDEX} already exists.")
+    # ==========================================================
+    # Get Index
+    # ==========================================================
 
     def get_index(self):
+        """
+        Return Pinecone index instance.
+        """
 
         return self.pc.Index(PINECONE_INDEX)
 
-    def delete_index(self):
+    # ==========================================================
+    # Delete Index
+    # ==========================================================
 
-        self.pc.delete_index(PINECONE_INDEX)
+    def delete_index(self):
+        """
+        Delete Pinecone index.
+        """
+
+        existing_indexes = self.pc.list_indexes().names()
+
+        if PINECONE_INDEX in existing_indexes:
+            self.pc.delete_index(PINECONE_INDEX)
+            print(f"Index '{PINECONE_INDEX}' deleted.")

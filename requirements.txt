@@ -36,3 +36,5 @@ streamlit
 # Utilities
 # ===========================
 tqdm
+plotly
+Pillow
