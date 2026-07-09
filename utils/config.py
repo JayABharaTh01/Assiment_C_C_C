@@ -49,3 +49,15 @@ STREAMLIT_PORT = int(os.getenv("STREAMLIT_PORT"))
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL")
 LOG_FILE = os.getenv("LOG_FILE")
+
+# LLM
+
+LLM_PROVIDER = os.getenv("LLM_PROVIDER")
+
+LLM_MODEL = os.getenv("LLM_MODEL")
+
+LLM_MAX_NEW_TOKENS = int(os.getenv("LLM_MAX_NEW_TOKENS"))
+
+LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE"))
+
+LLM_DO_SAMPLE = os.getenv("LLM_DO_SAMPLE") == "True"

@@ -1,76 +1,137 @@
-from data_pipeline.pipeline import DataPipeline
-from embeddings.embedding_manager import EmbeddingManager
-from vector_store.vector_manager import VectorManager
+"""
+main.py
 
+Entry point for the Customer Complaint Chatbot.
 
-pipeline = DataPipeline()
+Starts the Streamlit application and handles
+user interaction with the RAG pipeline.
 
-documents = pipeline.run()
+Author: Jaya Bharath
+"""
 
-embedder = EmbeddingManager()
-
-manager = VectorManager()
-
-dimension = len(
-    embedder.embed_chunk("Hello")
-)
-
-manager.initialize(dimension)
-
-for doc_idx, doc in enumerate(documents):
-
-    embeddings = embedder.embed_chunks(
-        doc["chunks"]
-    )
-
-    # Create metadata for each chunk
-    metadata = [
-        {
-            "chunk_id": f"{doc['filename']}_chunk_{i}",
-            "filename": doc["filename"],
-            "filetype": doc["filetype"],
-            "chunk_index": i
-        }
-        for i in range(len(doc["chunks"]))
-    ]
-
-    manager.upload(
-        embeddings,
-        doc["chunks"],
-        metadata
-    )
-
-print("✓ All documents processed and uploaded to vector store!")
-
-print("Completed.")
-
+import streamlit as st
 
 from rag.rag_pipeline import RAGPipeline
+from utils.config import PROJECT_NAME
 
 
-def main():
+# ==========================================================
+# Page Configuration
+# ==========================================================
 
-    chatbot = RAGPipeline()
+st.set_page_config(
+    page_title=PROJECT_NAME,
+    page_icon="🤖",
+    layout="wide",
+)
 
-    while True:
+# ==========================================================
+# Load RAG Pipeline (Only Once)
+# ==========================================================
 
-        question = input("\nAsk : ")
-
-        if question.lower() == "exit":
-            break
-
-        response = chatbot.ask(question)
-
-        print("\nAnswer\n")
-
-        print(response["answer"])
-
-        print("\nSources\n")
-
-        for source in response["sources"]:
-
-            print(source.metadata["filename"])
+@st.cache_resource
+def load_chatbot():
+    """
+    Initialize the RAG pipeline once and cache it.
+    """
+    return RAGPipeline()
 
 
-if __name__ == "__main__":
-    main()
+chatbot = load_chatbot()
+
+# ==========================================================
+# Session State
+# ==========================================================
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# ==========================================================
+# Header
+# ==========================================================
+
+st.title("🤖 Customer Complaint Chatbot")
+
+st.markdown(
+    """
+Ask questions related to:
+
+- Orders
+- Returns
+- Customers
+- Support Tickets
+- Company Policies
+"""
+)
+
+st.divider()
+
+# ==========================================================
+# Display Chat History
+# ==========================================================
+
+for message in st.session_state.messages:
+
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# ==========================================================
+# Chat Input
+# ==========================================================
+
+question = st.chat_input("Ask your question...")
+
+if question:
+
+    # ---------------- User ---------------- #
+
+    st.session_state.messages.append(
+        {
+            "role": "user",
+            "content": question
+        }
+    )
+
+    with st.chat_message("user"):
+        st.markdown(question)
+
+    # ---------------- Assistant ---------------- #
+
+    with st.chat_message("assistant"):
+
+        with st.spinner("Searching knowledge base..."):
+
+            response = chatbot.ask(question)
+
+            st.markdown(response.answer)
+
+            # Processing Time
+
+            st.caption(
+                f"⏱ Response Time : {response.processing_time:.2f} sec"
+            )
+
+            # Sources
+
+            if response.sources:
+
+                with st.expander("📄 Sources"):
+
+                    for source in response.sources:
+
+                        st.write(
+                            f"**{source['filename']}**"
+                        )
+
+                        if "score" in source:
+
+                            st.write(
+                                f"Similarity : {source['score']:.4f}"
+                            )
+
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": response.answer
+            }
+        )

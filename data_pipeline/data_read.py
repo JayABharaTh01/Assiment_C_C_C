@@ -1,117 +1,164 @@
 """
 data_read.py
 
-Reads all supported documents from the data folder.
+Reads all supported documents from the data directory and converts them
+into Document objects.
 
 Supported Formats:
-- PDF
-- CSV
-- JSON
-- DOCX
+    - PDF
+    - CSV
+    - JSON
+    - DOCX
 
 Author: Jaya Bharath
 """
 
 from pathlib import Path
 import json
-import pandas as pd
+
 import fitz  # PyMuPDF
-from docx import Document
+import pandas as pd
+from docx import Document as DocxDocument
+
+from models.document import Document
+from utils.config import DATA_FOLDER, SUPPORTED_EXTENSIONS
 
 
 class DataReader:
     """
-    Reads all supported files from the data folder.
+    Reads all supported files from the configured data folder.
     """
 
-    SUPPORTED_EXTENSIONS = {".pdf", ".csv", ".json", ".docx"}
+    def __init__(self):
+        self.data_folder = Path(DATA_FOLDER)
 
-    def __init__(self, data_folder="data"):
-        self.data_folder = Path(data_folder)
+        if not self.data_folder.exists():
+            raise FileNotFoundError(
+                f"Data folder not found: {self.data_folder}"
+            )
 
-    # --------------------------------------------------
-    # PDF
-    # --------------------------------------------------
-    def read_pdf(self, filepath):
-        text = ""
+    # ==========================================================
+    # PDF Reader
+    # ==========================================================
 
-        with fitz.open(filepath) as pdf:
+    def _read_pdf(self, file_path: Path) -> str:
+        """
+        Read text from a PDF file.
+        """
+
+        text = []
+
+        with fitz.open(file_path) as pdf:
+
             for page in pdf:
-                text += page.get_text()
+                text.append(page.get_text())
 
-        return text
+        return "\n".join(text)
 
-    # --------------------------------------------------
-    # CSV
-    # --------------------------------------------------
-    def read_csv(self, filepath):
-        df = pd.read_csv(filepath)
+    # ==========================================================
+    # CSV Reader
+    # ==========================================================
+
+    def _read_csv(self, file_path: Path) -> str:
+        """
+        Read CSV and convert it into plain text.
+        """
+
+        df = pd.read_csv(file_path)
 
         return df.to_string(index=False)
 
-    # --------------------------------------------------
-    # JSON
-    # --------------------------------------------------
-    def read_json(self, filepath):
-        with open(filepath, "r", encoding="utf-8") as file:
+    # ==========================================================
+    # JSON Reader
+    # ==========================================================
+
+    def _read_json(self, file_path: Path) -> str:
+        """
+        Read JSON and convert into formatted string.
+        """
+
+        with open(file_path, "r", encoding="utf-8") as file:
             data = json.load(file)
 
         return json.dumps(data, indent=2)
 
-    # --------------------------------------------------
-    # DOCX
-    # --------------------------------------------------
-    def read_docx(self, filepath):
-        doc = Document(filepath)
+    # ==========================================================
+    # DOCX Reader
+    # ==========================================================
 
-        text = "\n".join(
+    def _read_docx(self, file_path: Path) -> str:
+        """
+        Read Microsoft Word document.
+        """
+
+        document = DocxDocument(file_path)
+
+        paragraphs = [
             paragraph.text
-            for paragraph in doc.paragraphs
-        )
+            for paragraph in document.paragraphs
+            if paragraph.text.strip()
+        ]
 
-        return text
+        return "\n".join(paragraphs)
 
-    # --------------------------------------------------
-    # Detect File Type
-    # --------------------------------------------------
-    def read_file(self, filepath):
+    # ==========================================================
+    # Detect Reader
+    # ==========================================================
 
-        extension = filepath.suffix.lower()
+    def _read_file(self, file_path: Path) -> str:
+        """
+        Automatically detect file type and call the correct reader.
+        """
+
+        extension = file_path.suffix.lower()
 
         if extension == ".pdf":
-            return self.read_pdf(filepath)
+            return self._read_pdf(file_path)
 
         elif extension == ".csv":
-            return self.read_csv(filepath)
+            return self._read_csv(file_path)
 
         elif extension == ".json":
-            return self.read_json(filepath)
+            return self._read_json(file_path)
 
         elif extension == ".docx":
-            return self.read_docx(filepath)
+            return self._read_docx(file_path)
 
-        else:
-            raise ValueError(f"Unsupported file: {filepath}")
+        raise ValueError(
+            f"Unsupported file type: {extension}"
+        )
 
-    # --------------------------------------------------
-    # Read Entire data Folder
-    # --------------------------------------------------
-    def read_all_files(self):
+    # ==========================================================
+    # Read All Files
+    # ==========================================================
+
+    def read_documents(self):
+        """
+        Read every supported document inside the data folder.
+
+        Returns
+        -------
+        list[Document]
+        """
 
         documents = []
 
-        for file in self.data_folder.iterdir():
+        for file_path in sorted(self.data_folder.iterdir()):
 
-            if file.is_file() and file.suffix.lower() in self.SUPPORTED_EXTENSIONS:
+            if not file_path.is_file():
+                continue
 
-                content = self.read_file(file)
+            if file_path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+                continue
 
-                documents.append(
-                    {
-                        "filename": file.name,
-                        "filetype": file.suffix.lower(),
-                        "content": content,
-                    }
-                )
+            content = self._read_file(file_path)
+
+            document = Document(
+                filename=file_path.name,
+                filetype=file_path.suffix.lower(),
+                content=content
+            )
+
+            documents.append(document)
 
         return documents
