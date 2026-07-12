@@ -1,6 +1,10 @@
 Customer Complaint Chatbot / RAG-based Assistant
 ===============================================
 
+Version
+-------
+- v1.0
+
 Overview
 --------
 This repository implements a Retrieval-Augmented Generation (RAG) pipeline and a small Streamlit dashboard for exploring retail customer service data (orders, returns, customers, and support tickets). The project is designed as a teaching/prototyping workspace for building tool-using agents that combine retrieval from local data sources with an LLM for grounded responses.

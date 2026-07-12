@@ -43,7 +43,7 @@ CHUNK_SIZE = _get_int_env("CHUNK_SIZE", 500)
 CHUNK_OVERLAP = _get_int_env("CHUNK_OVERLAP", 50)
 
 # Embedding
-EMBEDDING_PROVIDER = _get_env("EMBEDDING_PROVIDER", "SentenceTransformers")
+EMBEDDING_PROVIDER = _get_env("EMBEDDING_PROVIDER", "sentence-transformers")
 EMBEDDING_MODEL = _get_env("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 EMBEDDING_DEVICE = _get_env("EMBEDDING_DEVICE", "cpu")
 EMBEDDING_BATCH_SIZE = _get_int_env("EMBEDDING_BATCH_SIZE", 32)

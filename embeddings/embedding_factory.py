@@ -39,7 +39,7 @@ class EmbeddingFactory:
 
         provider = EMBEDDING_PROVIDER.lower().strip()
 
-        if provider == "sentence-transformers":
+        if provider in {"sentence-transformers", "sentencetransformers"}:
             return HuggingFaceEmbedding()
 
         raise ValueError(
